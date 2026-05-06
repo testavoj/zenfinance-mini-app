@@ -29,6 +29,7 @@ interface AppContextType {
   incrementPhotoUsage: () => void;
   grantBonusUses: (kind: 'ai' | 'photo', n: number) => void;
   resetAllData: () => void;
+  setCustomSound: (kind: 'income' | 'expense' | 'payment' | 'system', dataUrl: string | null) => void;
   tgUser: { firstName: string; lastName?: string; username?: string; photoUrl?: string; languageCode?: string; id?: number } | null;
   isLoading: boolean;
 }
@@ -172,6 +173,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const setCustomSound: AppContextType['setCustomSound'] = (kind, dataUrl) => {
+    setPreferences(prev => ({
+      ...prev,
+      customSounds: { ...prev.customSounds, [kind]: dataUrl || '' },
+    }));
+  };
+
   const resetAllData = () => {
     localStorage.removeItem('zen_prefs');
     localStorage.removeItem('zen_prefs_v2');
@@ -217,6 +225,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       incrementPhotoUsage,
       grantBonusUses,
       resetAllData,
+      setCustomSound,
       tgUser,
       isLoading
     }}>

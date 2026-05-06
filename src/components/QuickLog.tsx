@@ -261,7 +261,22 @@ export default function QuickLog() {
             </button>
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            {HAS_AI && (
+              <span
+                key={photosRemaining}
+                className={cn(
+                  "text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full transition-colors tabular-nums",
+                  photosRemaining > 3
+                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                    : photosRemaining > 0
+                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                    : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                )}
+              >
+                {photosRemaining}/{PHOTO_QUOTA_LIMIT} scans
+              </span>
+            )}
             <button onClick={toggleVoice} className="p-3 bg-zinc-100 dark:bg-white/5 rounded-2xl text-zinc-500 hover:text-indigo-600 transition-colors">
               <Mic size={18} />
             </button>

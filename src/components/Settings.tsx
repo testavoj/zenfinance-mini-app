@@ -17,7 +17,11 @@ import {
   Fingerprint,
   Bell,
   Activity,
+  Upload,
+  Play,
+  X as XIcon,
 } from 'lucide-react';
+import { isTelegramWebApp } from '../lib/telegram';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../AppContext';
 import { cn } from '../lib/utils';
@@ -51,7 +55,7 @@ const LEGAL = {
 
 export default function Settings() {
   const { t } = useTranslation();
-  const { preferences, setPreferences, security, setSecurity, isPrivacyMode, togglePrivacyMode, resetAllData } = useApp();
+  const { preferences, setPreferences, security, setSecurity, isPrivacyMode, togglePrivacyMode, resetAllData, setCustomSound } = useApp();
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [legalKey, setLegalKey] = useState<keyof typeof LEGAL | null>(null);
 
@@ -168,7 +172,7 @@ export default function Settings() {
         </button>
       </Section>
 
-      {/* Sound — collapsible */}
+      {/* Sound — collapsible, with per-event custom audio upload */}
       <Collapsible
         icon={Volume2}
         title="Sound"
@@ -181,52 +185,48 @@ export default function Settings() {
           on={preferences.soundSettings.enabled}
           onChange={v => set('soundSettings', { ...preferences.soundSettings, enabled: v })}
         />
-        <Toggle
-          label="On income"
-          icon={Activity}
-          on={preferences.soundSettings.income}
-          onChange={v => set('soundSettings', { ...preferences.soundSettings, income: v })}
-        />
-        <Toggle
-          label="On expense"
-          icon={Activity}
-          on={preferences.soundSettings.expense}
-          onChange={v => set('soundSettings', { ...preferences.soundSettings, expense: v })}
-        />
-        <Toggle
-          label="System tones"
-          icon={Bell}
-          on={preferences.soundSettings.system}
-          onChange={v => set('soundSettings', { ...preferences.soundSettings, system: v })}
-        />
+        {(['income', 'expense', 'payment', 'system'] as const).map(kind => (
+          <React.Fragment key={kind}>
+            <SoundRow
+              kind={kind}
+              enabled={preferences.soundSettings[kind]}
+              customUrl={preferences.customSounds?.[kind] || ''}
+              onToggle={v => set('soundSettings', { ...preferences.soundSettings, [kind]: v })}
+              onPick={url => setCustomSound(kind, url)}
+              onClear={() => setCustomSound(kind, null)}
+            />
+          </React.Fragment>
+        ))}
       </Collapsible>
 
-      {/* Security — collapsible */}
-      <Collapsible
-        icon={Fingerprint}
-        title="Security"
-        open={openSection === 'security'}
-        onToggle={() => setOpenSection(openSection === 'security' ? null : 'security')}
-      >
-        <Toggle
-          label="Biometric (device-managed)"
+      {/* Security — hidden inside Telegram (auth handled by Telegram itself) */}
+      {!isTelegramWebApp() && (
+        <Collapsible
           icon={Fingerprint}
-          on={security.biometric}
-          onChange={v => setSecurity(s => ({ ...s, biometric: v }))}
-        />
-        <Toggle
-          label="Two-factor reminders"
-          icon={ShieldCheck}
-          on={security.twoFactor}
-          onChange={v => setSecurity(s => ({ ...s, twoFactor: v }))}
-        />
-        <Toggle
-          label="Anomaly alerts"
-          icon={Bell}
-          on={security.anomaly}
-          onChange={v => setSecurity(s => ({ ...s, anomaly: v }))}
-        />
-      </Collapsible>
+          title="Security"
+          open={openSection === 'security'}
+          onToggle={() => setOpenSection(openSection === 'security' ? null : 'security')}
+        >
+          <Toggle
+            label="Biometric (device-managed)"
+            icon={Fingerprint}
+            on={security.biometric}
+            onChange={v => setSecurity(s => ({ ...s, biometric: v }))}
+          />
+          <Toggle
+            label="Two-factor reminders"
+            icon={ShieldCheck}
+            on={security.twoFactor}
+            onChange={v => setSecurity(s => ({ ...s, twoFactor: v }))}
+          />
+          <Toggle
+            label="Anomaly alerts"
+            icon={Bell}
+            on={security.anomaly}
+            onChange={v => setSecurity(s => ({ ...s, anomaly: v }))}
+          />
+        </Collapsible>
+      )}
 
       {/* Legal — collapsible */}
       <Collapsible
@@ -319,6 +319,94 @@ function Collapsible({
         )}
       </AnimatePresence>
     </motion.section>
+  );
+}
+
+function SoundRow({
+  kind, enabled, customUrl, onToggle, onPick, onClear,
+}: {
+  kind: 'income' | 'expense' | 'payment' | 'system';
+  enabled: boolean;
+  customUrl: string;
+  onToggle: (v: boolean) => void;
+  onPick: (dataUrl: string) => void;
+  onClear: () => void;
+}) {
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (file.size > 500_000) {
+      alert('Sound file is too big — keep it under 500 KB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => onPick(String(reader.result));
+    reader.readAsDataURL(file);
+  };
+
+  const preview = () => {
+    try {
+      const a = new Audio(customUrl);
+      a.volume = 0.5;
+      a.play().catch(() => {});
+    } catch { /* noop */ }
+  };
+
+  const labels: Record<string, string> = {
+    income: 'On income',
+    expense: 'On expense',
+    payment: 'On payment',
+    system: 'System tones',
+  };
+
+  return (
+    <div className="rounded-xl bg-zinc-100 dark:bg-white/5 p-2.5 space-y-2">
+      <Toggle
+        label={labels[kind]}
+        icon={kind === 'system' ? Bell : Activity}
+        on={enabled}
+        onChange={onToggle}
+      />
+      {enabled && (
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => inputRef.current?.click()}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-white dark:bg-white/10 border border-zinc-200 dark:border-white/10 text-xs font-bold text-zinc-700 dark:text-zinc-200 hover:border-indigo-500/40 transition-colors"
+          >
+            <Upload size={12} />
+            {customUrl ? 'Replace audio' : 'Upload audio'}
+          </button>
+          {customUrl && (
+            <>
+              <button
+                onClick={preview}
+                className="p-2 rounded-lg bg-white dark:bg-white/10 border border-zinc-200 dark:border-white/10 text-zinc-600 hover:text-indigo-500 transition-colors"
+                aria-label="Preview"
+              >
+                <Play size={12} />
+              </button>
+              <button
+                onClick={onClear}
+                className="p-2 rounded-lg bg-white dark:bg-white/10 border border-zinc-200 dark:border-white/10 text-zinc-600 hover:text-rose-500 transition-colors"
+                aria-label="Reset to default"
+              >
+                <XIcon size={12} />
+              </button>
+            </>
+          )}
+          <input
+            ref={inputRef}
+            type="file"
+            accept="audio/*"
+            onChange={onFile}
+            className="hidden"
+          />
+        </div>
+      )}
+    </div>
   );
 }
 
