@@ -1,43 +1,74 @@
-export const MOCK_ACCOUNTS = [
-  { id: '1', name: 'Main Checking', type: 'bank', balance: 124500.80, currency: 'RUB', institution: 'Sberbank' },
-  { id: '2', name: 'Savings Fund', type: 'bank', balance: 450000.00, currency: 'RUB', institution: 'T-Bank' },
-  { id: '3', name: 'Digital Wallet', type: 'cash', balance: 5400.00, currency: 'RUB', institution: 'Cash' },
-  { id: '4', name: 'Investment Account', type: 'investment', balance: 82000.45, currency: 'RUB', institution: 'VTB' },
-  { id: '5', name: 'Ameriabank Savings', type: 'bank', balance: 1250000.00, currency: 'AMD', institution: 'Ameriabank' },
-];
+import type { FinancialTransaction } from './utils';
 
-export const MOCK_TRANSACTIONS = [
-  { id: 't1', amount: 450.00, category: 'Food', type: 'expense', description: 'Cofix', timestamp: new Date().toISOString(), currency: 'RUB' },
-  { id: 't2', amount: 35000.00, category: 'Housing', type: 'expense', description: 'Rent Payment', timestamp: new Date(Date.now() - 86400000).toISOString(), currency: 'RUB' },
-  { id: 't3', amount: 150000.00, category: 'Salary', type: 'income', description: 'Monthly Salary', timestamp: new Date(Date.now() - 172800000).toISOString(), currency: 'RUB' },
-  { id: 't4', amount: 1250.00, category: 'Transport', type: 'expense', description: 'Yandex Go', timestamp: new Date(Date.now() - 259200000).toISOString(), currency: 'RUB' },
-  { id: 't5', amount: 8520.20, category: 'Shopping', type: 'expense', description: 'Ozon Purchase', timestamp: new Date(Date.now() - 345600000).toISOString(), currency: 'RUB' },
-  { id: 't6', amount: 45000.00, category: 'Food', type: 'expense', description: 'Supermarket Visit', timestamp: new Date(Date.now() - 50000).toISOString(), currency: 'AMD' },
-];
+export interface FinancialAccount {
+  id: string;
+  name: string;
+  type: 'bank' | 'cash' | 'investment' | 'credit' | 'crypto';
+  balance: number;
+  currency: string;
+  institution: string;
+}
 
-export const CHART_DATA_WEEK = [
-  { name: 'Mon', income: 0, expense: 45 },
-  { name: 'Tue', income: 3500, expense: 1200 },
-  { name: 'Wed', income: 0, expense: 12 },
-  { name: 'Thu', income: 200, expense: 85 },
-  { name: 'Fri', income: 0, expense: 30 },
-  { name: 'Sat', income: 0, expense: 150 },
-  { name: 'Sun', income: 0, expense: 60 },
-];
+export const MOCK_ACCOUNTS: FinancialAccount[] = [];
+export const MOCK_TRANSACTIONS: FinancialTransaction[] = [];
 
-export const CHART_DATA_MONTH = [
-  { name: 'Week 1', income: 4500, expense: 3200 },
-  { name: 'Week 2', income: 1000, expense: 1500 },
-  { name: 'Week 3', income: 2500, expense: 1800 },
-  { name: 'Week 4', income: 5000, expense: 2100 },
-];
+const emptyChart = (labels: string[]) =>
+  labels.map(name => ({ name, income: 0, expense: 0 }));
 
-export const CHART_DATA_DAY = [
-  { name: '08:00', income: 0, expense: 5 },
-  { name: '10:00', income: 0, expense: 12 },
-  { name: '12:00', income: 0, expense: 45 },
-  { name: '14:00', income: 0, expense: 20 },
-  { name: '16:00', income: 0, expense: 0 },
-  { name: '18:00', income: 0, expense: 15 },
-  { name: '20:00', income: 0, expense: 10 },
-];
+export const CHART_DATA_WEEK = emptyChart(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']);
+export const CHART_DATA_MONTH = emptyChart(['Week 1', 'Week 2', 'Week 3', 'Week 4']);
+export const CHART_DATA_DAY = emptyChart(['08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00']);
+
+const dayKey = (d: Date) => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()];
+
+export function buildChartData(
+  range: 'Day' | 'Week' | 'Month',
+  transactions: FinancialTransaction[]
+) {
+  const base = range === 'Day' ? CHART_DATA_DAY : range === 'Month' ? CHART_DATA_MONTH : CHART_DATA_WEEK;
+  if (!transactions.length) return base;
+
+  if (range === 'Week') {
+    const buckets: Record<string, { income: number; expense: number }> = {};
+    for (const row of base) buckets[row.name] = { income: 0, expense: 0 };
+    for (const t of transactions) {
+      const k = dayKey(new Date(t.timestamp));
+      if (buckets[k]) {
+        if (t.type === 'income') buckets[k].income += t.amount;
+        else buckets[k].expense += t.amount;
+      }
+    }
+    return base.map(row => ({ name: row.name, ...buckets[row.name] }));
+  }
+
+  if (range === 'Day') {
+    const buckets: Record<string, { income: number; expense: number }> = {};
+    for (const row of base) buckets[row.name] = { income: 0, expense: 0 };
+    for (const t of transactions) {
+      const d = new Date(t.timestamp);
+      if (d.toDateString() !== new Date().toDateString()) continue;
+      const hour = d.getHours();
+      const slot = base.find(b => Math.abs(parseInt(b.name) - hour) < 2);
+      if (slot && buckets[slot.name]) {
+        if (t.type === 'income') buckets[slot.name].income += t.amount;
+        else buckets[slot.name].expense += t.amount;
+      }
+    }
+    return base.map(row => ({ name: row.name, ...buckets[row.name] }));
+  }
+
+  // Month: bucket by week of month
+  const buckets: Record<string, { income: number; expense: number }> = {};
+  for (const row of base) buckets[row.name] = { income: 0, expense: 0 };
+  const now = new Date();
+  for (const t of transactions) {
+    const d = new Date(t.timestamp);
+    if (d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear()) continue;
+    const wk = `Week ${Math.min(4, Math.floor((d.getDate() - 1) / 7) + 1)}`;
+    if (buckets[wk]) {
+      if (t.type === 'income') buckets[wk].income += t.amount;
+      else buckets[wk].expense += t.amount;
+    }
+  }
+  return base.map(row => ({ name: row.name, ...buckets[row.name] }));
+}

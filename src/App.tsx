@@ -11,20 +11,24 @@ import './i18n';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [isLoggedIn, setIsLoggedIn] = useState(() => isTelegramWebApp());
+  const insideTelegram = isTelegramWebApp();
+
+  if (!insideTelegram) {
+    return (
+      <AppProvider>
+        <Login />
+      </AppProvider>
+    );
+  }
 
   return (
     <AppProvider>
-      {!isLoggedIn ? (
-        <Login onLogin={() => setIsLoggedIn(true)} />
-      ) : (
-        <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
-          {activeTab === 'dashboard' && <Dashboard onNavigate={setActiveTab} />}
-          {activeTab === 'quick-log' && <QuickLog />}
-          {activeTab === 'ai' && <AIAssistant />}
-          {activeTab === 'settings' && <Settings />}
-        </Layout>
-      )}
+      <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
+        {activeTab === 'dashboard' && <Dashboard onNavigate={setActiveTab} />}
+        {activeTab === 'quick-log' && <QuickLog />}
+        {activeTab === 'ai' && <AIAssistant />}
+        {activeTab === 'settings' && <Settings />}
+      </Layout>
     </AppProvider>
   );
 }

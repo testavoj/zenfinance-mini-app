@@ -32,6 +32,7 @@ jobs:
       - name: Build
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          VITE_ADSGRAM_BLOCK_ID: ${{ secrets.ADSGRAM_BLOCK_ID }}
         run: npm run build
 
       - name: Add SPA fallback for GitHub Pages

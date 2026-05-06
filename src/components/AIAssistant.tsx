@@ -14,11 +14,11 @@ interface Message {
 
 export default function AIAssistant() {
   const { t } = useTranslation();
-  const { preferences, incrementAIUsage } = useApp();
+  const { preferences, incrementAIUsage, tgUser } = useApp();
   const { playSound } = useSound();
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: 'Hello Alex! I am your ZenFinance AI. How can I help you optimize your wealth today?' }
+    { role: 'assistant', content: `Hi ${tgUser?.firstName || 'there'}! I'm your ZenFinance AI. Ask me anything about budgeting, savings, or investments.` }
   ]);
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);

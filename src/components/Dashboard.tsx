@@ -18,7 +18,7 @@ import {
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useApp } from '../AppContext';
 import { formatCurrency, cn } from '../lib/utils';
-import { MOCK_ACCOUNTS, MOCK_TRANSACTIONS, CHART_DATA_WEEK, CHART_DATA_MONTH, CHART_DATA_DAY } from '../lib/mockData';
+import { buildChartData } from '../lib/mockData';
 import { motion } from 'motion/react';
 import Modal from './ui/Modal';
 import AccountsSummary from './AccountsSummary';
@@ -30,12 +30,8 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (tab: string) =
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   const [showAllHistory, setShowAllHistory] = useState(false);
 
-  const totalBalance = MOCK_ACCOUNTS.reduce((acc, curr) => acc + curr.balance, 0);
-
-  // Update chart data based on transactions
-  // In a real app we would calculate this from transactions, 
-  // but for now we keep the mock chart data but use transactions for history list.
-  const chartData = timeRange === 'Day' ? CHART_DATA_DAY : (timeRange === 'Month' ? CHART_DATA_MONTH : CHART_DATA_WEEK);
+  const totalBalance = transactions.reduce((acc, t) => acc + (t.type === 'income' ? t.amount : -t.amount), 0);
+  const chartData = buildChartData(timeRange, transactions);
 
   return (
     <div className="space-y-8 pb-12">

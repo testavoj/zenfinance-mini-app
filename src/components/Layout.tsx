@@ -22,6 +22,8 @@ import { useApp } from '../AppContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 import Modal from './ui/Modal';
+import { showRewardedAd, adsEnabled } from '../lib/adsgram';
+import { getTelegram, haptic } from '../lib/telegram';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -31,9 +33,42 @@ interface LayoutProps {
 
 export default function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
   const { t } = useTranslation();
-  const { isPrivacyMode, togglePrivacyMode, notifications, removeNotification, clearAllNotifications, showAd, setShowAd } = useApp();
+  const { isPrivacyMode, togglePrivacyMode, notifications, removeNotification, clearAllNotifications, tgUser, grantBonusUses } = useApp();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [adState, setAdState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+
+  const displayName = tgUser ? `${tgUser.firstName}${tgUser.lastName ? ' ' + tgUser.lastName : ''}` : 'Guest';
+  const avatarSeed = tgUser?.username || tgUser?.firstName || 'guest';
+  const avatarUrl = tgUser?.photoUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(avatarSeed)}`;
+
+  const onWatchAd = async () => {
+    haptic('tap');
+    setAdState('loading');
+    const ok = await showRewardedAd();
+    if (ok) {
+      grantBonusUses('photo', 1);
+      grantBonusUses('ai', 1);
+      setAdState('success');
+      haptic('success');
+    } else {
+      setAdState('error');
+      haptic('error');
+    }
+    setTimeout(() => setAdState('idle'), 2500);
+  };
+
+  const onPremiumClick = () => {
+    const tg = getTelegram();
+    const msg = 'Premium plans are coming soon. Watch ads to refill your AI and photo quota in the meantime!';
+    if (tg?.showAlert) tg.showAlert(msg);
+    else alert(msg);
+  };
+
+  const onLogout = () => {
+    const tg = getTelegram();
+    if (tg) tg.close();
+  };
 
   const navItems = [
     { id: 'dashboard', icon: LayoutDashboard, label: t('dashboard') },
@@ -113,14 +148,14 @@ export default function Layout({ children, activeTab, setActiveTab }: LayoutProp
               className="flex items-center gap-3 pl-6 border-l border-zinc-200 dark:border-white/10 group text-left"
             >
               <div className="text-right">
-                <p className="text-sm font-medium group-hover:text-indigo-600 dark:group-hover:text-indigo-400">Alex Nomad</p>
-                <p className="text-xs text-indigo-600 dark:text-indigo-400 font-mono">Premium</p>
+                <p className="text-sm font-medium group-hover:text-indigo-600 dark:group-hover:text-indigo-400">{displayName}</p>
+                <p className="text-xs text-indigo-600 dark:text-indigo-400 font-mono">Free tier</p>
               </div>
               <div className="w-10 h-10 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-full p-[2px]">
                 <div className="w-full h-full rounded-full bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center p-1">
-                  <img 
-                    src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" 
-                    alt="User" 
+                  <img
+                    src={avatarUrl}
+                    alt="User"
                     className="w-full h-full rounded-full"
                   />
                 </div>
@@ -193,39 +228,46 @@ export default function Layout({ children, activeTab, setActiveTab }: LayoutProp
           <div className="space-y-8">
             <div className="flex flex-col items-center text-center">
               <div className="w-24 h-24 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-full p-1 mb-4 shadow-xl">
-                <img 
-                  src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" 
-                  alt="User" 
+                <img
+                  src={avatarUrl}
+                  alt="User"
                   className="w-full h-full rounded-full bg-zinc-900"
                 />
               </div>
-              <h4 className="text-2xl font-bold">Alex Nomad</h4>
-              <p className="text-zinc-500 text-sm">Member since Jan 2024</p>
-              <div className="mt-4 flex items-center gap-2 px-3 py-1 bg-indigo-600/10 border border-indigo-600/20 rounded-full text-indigo-400 text-xs font-bold uppercase">
-                <Crown size={12} />
-                Elite Premium
+              <h4 className="text-2xl font-bold">{displayName}</h4>
+              {tgUser?.username && (
+                <p className="text-zinc-500 text-sm">@{tgUser.username}</p>
+              )}
+              <div className="mt-4 flex items-center gap-2 px-3 py-1 bg-zinc-200 dark:bg-white/5 border border-zinc-300 dark:border-white/10 rounded-full text-zinc-500 text-xs font-bold uppercase">
+                Free tier
               </div>
             </div>
 
             <div className="space-y-4 pt-4">
-              <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl">
+              <div className="flex items-center justify-between p-4 bg-zinc-100 dark:bg-white/5 rounded-2xl">
                 <div className="flex items-center gap-3">
                   <User size={18} className="text-zinc-500" />
-                  <span className="text-sm">Personal Info</span>
+                  <span className="text-sm">Telegram identity</span>
                 </div>
-                <span className="text-xs text-zinc-500">Verified</span>
+                <span className="text-xs text-emerald-500">Verified</span>
               </div>
-              <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl">
+              <button
+                onClick={onPremiumClick}
+                className="w-full flex items-center justify-between p-4 bg-zinc-100 dark:bg-white/5 rounded-2xl hover:bg-zinc-200 dark:hover:bg-white/10 transition-colors"
+              >
                 <div className="flex items-center gap-3">
-                  <CreditCard size={18} className="text-zinc-500" />
-                  <span className="text-sm">Subscription</span>
+                  <Crown size={18} className="text-zinc-500" />
+                  <span className="text-sm">Premium</span>
                 </div>
-                <span className="text-xs text-zinc-500">Life-time</span>
-              </div>
+                <span className="text-xs text-indigo-500">Coming soon</span>
+              </button>
             </div>
-            
-            <button className="w-full py-4 bg-rose-500/10 text-rose-500 border border-rose-500/20 rounded-2xl font-bold text-sm hover:bg-rose-500 hover:text-white transition-all">
-              Log out of all devices
+
+            <button
+              onClick={onLogout}
+              className="w-full py-4 bg-rose-500/10 text-rose-500 border border-rose-500/20 rounded-2xl font-bold text-sm hover:bg-rose-500 hover:text-white transition-all"
+            >
+              Close mini app
             </button>
           </div>
         </Modal>
@@ -246,38 +288,50 @@ export default function Layout({ children, activeTab, setActiveTab }: LayoutProp
           </AnimatePresence>
         </div>
 
-        {/* Global Banner Ad */}
-        <AnimatePresence>
-          {showAd && (
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className="px-8 pb-8"
-            >
-              <div className="bg-white/5 border border-zinc-200 dark:border-white/10 rounded-3xl p-4 flex items-center justify-between group relative h-20 shrink-0 backdrop-blur-md">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-zinc-100 dark:bg-zinc-800 rounded-xl flex items-center justify-center text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-tighter shadow-inner">Ad</div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-black text-zinc-900 dark:text-white truncate">Upgrade to Premium for Zero Ads</p>
-                    <p className="text-xs text-zinc-500 font-medium truncate">Get unlimited AI requests and automated bank sync.</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <button className="bg-indigo-600 text-white px-6 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20 whitespace-nowrap">
-                    Go Premium
-                  </button>
-                  <button 
-                    onClick={() => setShowAd(false)}
-                    className="p-2 text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
-                  >
-                    <X size={18} />
-                  </button>
-                </div>
+        {/* Sponsored — non-dismissible. Tapping triggers an Adsgram rewarded ad
+            that grants +1 AI message and +1 photo scan. */}
+        <div className="px-4 md:px-8 pb-3 md:pb-6 pt-2">
+          <button
+            onClick={onWatchAd}
+            disabled={adState === 'loading'}
+            className={cn(
+              "w-full bg-gradient-to-r from-indigo-600/15 via-purple-600/10 to-indigo-600/15 border border-indigo-500/30 rounded-3xl p-4 flex items-center justify-between transition-all backdrop-blur-md hover:border-indigo-500/50 disabled:opacity-70",
+              adState === 'success' && "border-emerald-500/40 bg-emerald-500/10",
+              adState === 'error' && "border-rose-500/40 bg-rose-500/10"
+            )}
+          >
+            <div className="flex items-center gap-4 text-left min-w-0">
+              <div className="w-12 h-12 bg-indigo-600/20 rounded-xl flex items-center justify-center text-[10px] font-black text-indigo-400 uppercase tracking-tighter">
+                Ad
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              <div className="min-w-0">
+                {adState === 'success' ? (
+                  <>
+                    <p className="text-sm font-black text-emerald-500 truncate">Reward unlocked</p>
+                    <p className="text-xs text-zinc-500 font-medium truncate">+1 AI message and +1 photo scan added.</p>
+                  </>
+                ) : adState === 'error' ? (
+                  <>
+                    <p className="text-sm font-black text-rose-500 truncate">No ad available</p>
+                    <p className="text-xs text-zinc-500 font-medium truncate">Try again in a few minutes.</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-black text-zinc-900 dark:text-white truncate">
+                      {adsEnabled() ? 'Watch a short ad → +1 AI msg, +1 photo scan' : 'Sponsored slot'}
+                    </p>
+                    <p className="text-xs text-zinc-500 font-medium truncate">
+                      {adsEnabled() ? 'Adsgram rewarded video, ~15 seconds.' : 'Configure VITE_ADSGRAM_BLOCK_ID to enable real ads.'}
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+            <span className="bg-indigo-600 text-white px-5 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-500/20 whitespace-nowrap shrink-0 ml-3">
+              {adState === 'loading' ? '...' : adState === 'success' ? '✓' : 'Watch'}
+            </span>
+          </button>
+        </div>
 
         {/* Mobile Navigation */}
         <nav className="md:hidden border-t border-zinc-200 dark:border-white/10 bg-white/80 dark:bg-black/60 backdrop-blur-xl flex justify-around p-4 shrink-0">

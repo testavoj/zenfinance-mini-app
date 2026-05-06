@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useLayoutEffect } from 'react';
 import { UserPreferences, FinancialTransaction, AppNotification } from './lib/utils';
 import i18n from './i18n';
-import { MOCK_TRANSACTIONS } from './lib/mockData';
+import { getTelegramUser } from './lib/telegram';
 
 interface AppContextType {
   preferences: UserPreferences;
@@ -27,6 +27,8 @@ interface AppContextType {
   clearAllNotifications: () => void;
   incrementAIUsage: () => void;
   incrementPhotoUsage: () => void;
+  grantBonusUses: (kind: 'ai' | 'photo', n: number) => void;
+  tgUser: { firstName: string; lastName?: string; username?: string; photoUrl?: string; languageCode?: string; id?: number } | null;
   isLoading: boolean;
 }
 
@@ -36,7 +38,9 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [preferences, setPreferences] = useState<UserPreferences>(() => {
-    const saved = localStorage.getItem('zen_prefs');
+    // v2 prefix forces a clean reset for users who used the demo build.
+    localStorage.removeItem('zen_prefs');
+    const saved = localStorage.getItem('zen_prefs_v2');
     const defaults: UserPreferences = {
       language: 'en',
       theme: 'dark',
@@ -88,26 +92,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return defaults;
   });
 
-  const [transactions, setTransactions] = useState<FinancialTransaction[]>(MOCK_TRANSACTIONS as FinancialTransaction[]);
+  const [transactions, setTransactions] = useState<FinancialTransaction[]>(() => {
+    const saved = localStorage.getItem('zen_tx_v2');
+    if (!saved) return [];
+    try { return JSON.parse(saved); } catch { return []; }
+  });
 
-  const [notifications, setNotifications] = useState<AppNotification[]>([
-    {
-      id: '1',
-      title: 'New Login Detected',
-      message: 'A new device signed into your account from Yerevan, Armenia.',
-      type: 'security',
-      timestamp: new Date().toISOString(),
-      read: false
-    },
-    {
-      id: '2',
-      title: 'Budget Alert',
-      message: "You've reached 80% of your Food budget for April.",
-      type: 'budget',
-      timestamp: new Date().toISOString(),
-      read: false
-    }
-  ]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
   const [security, setSecurity] = useState({
     biometric: true,
@@ -120,10 +111,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // useLayoutEffect ensures the theme change is applied BEFORE the browser paints
   useLayoutEffect(() => {
-    localStorage.setItem('zen_prefs', JSON.stringify(preferences));
+    localStorage.setItem('zen_prefs_v2', JSON.stringify(preferences));
     document.documentElement.classList.toggle('dark', preferences.theme === 'dark');
     document.documentElement.style.colorScheme = preferences.theme;
   }, [preferences]);
+
+  useEffect(() => {
+    localStorage.setItem('zen_tx_v2', JSON.stringify(transactions));
+  }, [transactions]);
 
   useEffect(() => {
     i18n.changeLanguage(preferences.language);
@@ -156,6 +151,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setPreferences(prev => ({ ...prev, photoUsageCount: (prev.photoUsageCount || 0) + 1 }));
   };
 
+  const grantBonusUses = (kind: 'ai' | 'photo', n: number) => {
+    setPreferences(prev => {
+      const key = kind === 'ai' ? 'aiUsageCount' : 'photoUsageCount';
+      return { ...prev, [key]: Math.max(0, (prev[key] || 0) - n) };
+    });
+  };
+
+  const tgUserRaw = getTelegramUser();
+  const tgUser = tgUserRaw ? {
+    firstName: tgUserRaw.first_name || 'Friend',
+    lastName: tgUserRaw.last_name,
+    username: tgUserRaw.username,
+    photoUrl: tgUserRaw.photo_url,
+    languageCode: tgUserRaw.language_code,
+    id: tgUserRaw.id,
+  } : null;
+
   const removeNotification = (id: string) => {
     setNotifications(prev => prev.filter(n => n.id !== id));
   };
@@ -181,6 +193,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       clearAllNotifications,
       incrementAIUsage,
       incrementPhotoUsage,
+      grantBonusUses,
+      tgUser,
       isLoading
     }}>
       {children}
