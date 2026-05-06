@@ -1,0 +1,6 @@
+{
+  "name": "ZenFinance: AI Wealth Mini App",
+  "description": "AI-driven Telegram mini app for budgeting, transaction logging, and receipt photo OCR (10 free scans).",
+  "platform": "telegram-mini-app",
+  "majorCapabilities": ["AI Assistant", "Receipt Photo OCR", "Budget Analytics"]
+}
