@@ -28,6 +28,7 @@ interface AppContextType {
   incrementAIUsage: () => void;
   incrementPhotoUsage: () => void;
   grantBonusUses: (kind: 'ai' | 'photo', n: number) => void;
+  resetAllData: () => void;
   tgUser: { firstName: string; lastName?: string; username?: string; photoUrl?: string; languageCode?: string; id?: number } | null;
   isLoading: boolean;
 }
@@ -48,6 +49,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       privacyMode: false,
       aiUsageCount: 0,
       photoUsageCount: 0,
+      onboardingComplete: false,
+      tier: 'free',
       soundSettings: {
         enabled: true,
         income: true,
@@ -158,6 +161,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const resetAllData = () => {
+    localStorage.removeItem('zen_prefs');
+    localStorage.removeItem('zen_prefs_v2');
+    localStorage.removeItem('zen_tx_v2');
+    localStorage.removeItem('zen_anon_id');
+    location.reload();
+  };
+
   const tgUserRaw = getTelegramUser();
   const tgUser = tgUserRaw ? {
     firstName: tgUserRaw.first_name || 'Friend',
@@ -194,6 +205,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       incrementAIUsage,
       incrementPhotoUsage,
       grantBonusUses,
+      resetAllData,
       tgUser,
       isLoading
     }}>

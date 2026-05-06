@@ -79,6 +79,8 @@ export interface UserPreferences {
   };
   aiUsageCount: number;
   photoUsageCount: number;
+  onboardingComplete: boolean;
+  tier: 'free' | 'premium';
   soundSettings: {
     enabled: boolean;
     income: boolean;

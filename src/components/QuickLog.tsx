@@ -28,6 +28,7 @@ import { useSound } from '../lib/useSound';
 import Modal from './ui/Modal';
 import { useApp, PHOTO_QUOTA_LIMIT } from '../AppContext';
 import { haptic } from '../lib/telegram';
+import { HAS_AI } from '../lib/flags';
 
 export default function QuickLog() {
   const { t } = useTranslation();
@@ -204,8 +205,11 @@ export default function QuickLog() {
       haptic('success');
       setShowScanner(false);
     } catch (err) {
+      // Quota is intentionally NOT decremented here — failed attempts must
+      // not count against the user's free 10. incrementPhotoUsage() is only
+      // called above on success.
       const msg = err instanceof Error ? err.message : 'Failed to read image';
-      setScanError(msg);
+      setScanError(`${msg}. This attempt did not count toward your quota.`);
       playSound('error', 'system');
       haptic('error');
     } finally {
@@ -261,42 +265,46 @@ export default function QuickLog() {
             <button onClick={toggleVoice} className="p-3 bg-zinc-100 dark:bg-white/5 rounded-2xl text-zinc-500 hover:text-indigo-600 transition-colors">
               <Mic size={18} />
             </button>
-            <button onClick={onCameraClick} className="p-3 bg-zinc-100 dark:bg-white/5 rounded-2xl text-zinc-500 hover:text-indigo-600 transition-colors relative">
-              <Camera size={18} />
-              {photosRemaining > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-indigo-600 text-white text-[10px] font-black flex items-center justify-center">
-                  {photosRemaining}
-                </span>
-              )}
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={onFileSelected}
-              className="hidden"
-            />
+            {HAS_AI && (
+              <>
+                <button onClick={onCameraClick} className="p-3 bg-zinc-100 dark:bg-white/5 rounded-2xl text-zinc-500 hover:text-indigo-600 transition-colors relative">
+                  <Camera size={18} />
+                  {photosRemaining > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-indigo-600 text-white text-[10px] font-black flex items-center justify-center">
+                      {photosRemaining}
+                    </span>
+                  )}
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={onFileSelected}
+                  className="hidden"
+                />
+              </>
+            )}
           </div>
         </div>
 
-        {/* Big Amount Card */}
-        <div className="flex flex-col items-center justify-center py-8">
-           <div className="flex items-start justify-center gap-2">
-              <span className="text-4xl font-black text-zinc-300 dark:text-zinc-700 mt-2">{getCurrencySymbol(preferences.baseCurrency)}</span>
-              <motion.span 
+        {/* Amount Card — responsive, scales down with input length */}
+        <div className="flex flex-col items-center justify-center py-4 sm:py-6">
+           <div className="flex items-start justify-center gap-1.5">
+              <span className="text-2xl sm:text-3xl font-black text-zinc-300 dark:text-zinc-700 mt-1">{getCurrencySymbol(preferences.baseCurrency)}</span>
+              <motion.span
                 key={amount}
                 initial={{ scale: 0.95, opacity: 0.8 }}
                 animate={{ scale: 1, opacity: 1 }}
                 className={cn(
                   "font-black tracking-tighter tabular-nums text-zinc-900 dark:text-white transition-all",
-                  amount.length > 8 ? "text-6xl" : "text-8xl"
+                  amount.length > 8 ? "text-3xl sm:text-4xl" : amount.length > 5 ? "text-4xl sm:text-5xl" : "text-5xl sm:text-6xl"
                 )}
               >
                 {amount || '0'}
               </motion.span>
            </div>
-           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 mt-2">Ready for synchronization</p>
+           <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-zinc-400 mt-1">Tap numpad to enter amount</p>
         </div>
 
         {/* Note Input */}
@@ -315,27 +323,27 @@ export default function QuickLog() {
           </div>
         </div>
 
-        {/* Category Carousel */}
-        <div className="px-4 overflow-hidden">
-          <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
+        {/* Category Carousel — compact */}
+        <div className="px-2 overflow-hidden">
+          <div className="flex gap-2 overflow-x-auto pb-3 scrollbar-hide">
             {categories.map((cat) => (
               <button
                 key={cat.label}
                 onClick={() => { setCategory(cat.label); playSound('notify', 'system'); }}
                 className={cn(
-                  "min-w-[100px] flex flex-col items-center justify-center gap-3 p-4 rounded-[2.5rem] border-2 transition-all shrink-0 font-bold",
-                  category === cat.label 
-                    ? "bg-indigo-600 border-indigo-600 text-white shadow-xl shadow-indigo-500/20 scale-105" 
-                    : "bg-white dark:bg-white/5 border-zinc-100 dark:border-white/5 text-zinc-500 hover:border-indigo-600/30 text-xs"
+                  "min-w-[68px] flex flex-col items-center justify-center gap-1.5 p-2 rounded-2xl border transition-all shrink-0 font-bold",
+                  category === cat.label
+                    ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-500/20"
+                    : "bg-white dark:bg-white/5 border-zinc-100 dark:border-white/5 text-zinc-500 hover:border-indigo-600/30"
                 )}
               >
                 <div className={cn(
-                  "w-10 h-10 rounded-2xl flex items-center justify-center transition-all",
+                  "w-8 h-8 rounded-xl flex items-center justify-center transition-all",
                   category === cat.label ? "bg-white/20" : "bg-zinc-100 dark:bg-white/10"
                 )}>
-                  <cat.icon size={20} className={category === cat.label ? "text-white" : "text-zinc-500 dark:text-zinc-400"} />
+                  <cat.icon size={16} className={category === cat.label ? "text-white" : "text-zinc-500 dark:text-zinc-400"} />
                 </div>
-                <span className="text-[10px] font-black uppercase tracking-widest">{cat.label}</span>
+                <span className="text-[9px] font-black uppercase tracking-wider">{cat.label}</span>
               </button>
             ))}
           </div>

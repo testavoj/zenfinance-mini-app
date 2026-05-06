@@ -24,6 +24,7 @@ import { cn } from '../lib/utils';
 import Modal from './ui/Modal';
 import { showRewardedAd, adsEnabled } from '../lib/adsgram';
 import { getTelegram, haptic } from '../lib/telegram';
+import { HAS_AI } from '../lib/flags';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -73,7 +74,7 @@ export default function Layout({ children, activeTab, setActiveTab }: LayoutProp
   const navItems = [
     { id: 'dashboard', icon: LayoutDashboard, label: t('dashboard') },
     { id: 'quick-log', icon: PlusCircle, label: t('quickLog') },
-    { id: 'ai', icon: MessageSquare, label: t('ai') },
+    ...(HAS_AI ? [{ id: 'ai', icon: MessageSquare, label: t('ai') }] : []),
     { id: 'settings', icon: Settings, label: t('settings') },
   ];
 
