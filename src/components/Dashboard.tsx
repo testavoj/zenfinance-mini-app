@@ -33,39 +33,51 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (tab: string) =
   const totalBalance = transactions.reduce((acc, t) => acc + (t.type === 'income' ? t.amount : -t.amount), 0);
   const chartData = buildChartData(timeRange, transactions);
 
+  // Last-30-days stats — computed, no hardcoded values.
+  const since30 = Date.now() - 30 * 24 * 60 * 60 * 1000;
+  const recent = transactions.filter(t => new Date(t.timestamp).getTime() >= since30);
+  const recentExpense = recent.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+  const recentIncome = recent.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+  const burnRate = recentExpense / 30; // average daily expense, last 30d
+  const savingsRate = recentIncome > 0 ? Math.max(0, ((recentIncome - recentExpense) / recentIncome) * 100) : 0;
+  const healthIndex = transactions.length === 0
+    ? 0
+    : Math.min(100, Math.round(savingsRate * 0.6 + Math.min(40, transactions.length * 2)));
+  const hasData = transactions.length > 0;
+
   return (
     <div className="space-y-8 pb-12">
       {/* Header Stats */}
       {preferences.dashboardStats.showBalance && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard 
-            title={t('totalBalance')} 
-            value={isPrivacyMode ? '••••••' : formatCurrency(totalBalance, preferences.baseCurrency)} 
-            change="+2.4%" 
-            icon={Wallet} 
-            trend="up"
+          <StatCard
+            title={t('totalBalance')}
+            value={isPrivacyMode ? '••••••' : formatCurrency(totalBalance, preferences.baseCurrency)}
+            change={hasData ? '' : 'No data'}
+            icon={Wallet}
+            trend={totalBalance >= 0 ? 'up' : 'down'}
           />
-          <StatCard 
-            title={t('burnRate')} 
-            value={isPrivacyMode ? '••••••' : formatCurrency(2450.00, preferences.baseCurrency)} 
-            change="-12%" 
-            icon={Zap} 
+          <StatCard
+            title={t('burnRate')}
+            value={isPrivacyMode ? '••••••' : (hasData ? `${formatCurrency(burnRate, preferences.baseCurrency)}/d` : '—')}
+            change={hasData ? `${recent.length} entries` : 'Last 30 days'}
+            icon={Zap}
             trend="down"
           />
-          <StatCard 
-            title={t('savingsRate')} 
-            value="34%" 
-            change="+5%" 
-            icon={TrendingUp} 
-            trend="up"
+          <StatCard
+            title={t('savingsRate')}
+            value={hasData ? `${savingsRate.toFixed(0)}%` : '—'}
+            change={hasData ? (savingsRate >= 20 ? 'Healthy' : 'Low') : 'No income yet'}
+            icon={TrendingUp}
+            trend={savingsRate >= 20 ? 'up' : 'down'}
           />
-          <StatCard 
-            title="Health Index" 
-            value="82/100" 
-            change="Perfect" 
-            icon={Trophy} 
-            trend="up"
-            color="text-emerald-400"
+          <StatCard
+            title="Health Index"
+            value={hasData ? `${healthIndex}/100` : '—'}
+            change={hasData ? (healthIndex >= 70 ? 'Strong' : healthIndex >= 40 ? 'OK' : 'Build it up') : 'Log to start'}
+            icon={Trophy}
+            trend={healthIndex >= 50 ? 'up' : 'down'}
+            color={healthIndex >= 70 ? 'text-emerald-500' : 'text-zinc-900 dark:text-white'}
           />
         </div>
       )}

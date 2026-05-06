@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Languages,
@@ -11,8 +11,14 @@ import {
   Trash2,
   Check,
   ShieldCheck,
+  Volume2,
+  FileText,
+  ChevronDown,
+  Fingerprint,
+  Bell,
+  Activity,
 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../AppContext';
 import { cn } from '../lib/utils';
 import { getTelegram } from '../lib/telegram';
@@ -36,9 +42,18 @@ const CURRENCIES = [
   { code: 'GBP', name: 'British Pound', symbol: '£' },
 ];
 
+const LEGAL = {
+  tos: { title: 'Terms of Service', body: 'By using ZenFinance you agree to use it as a personal finance tool. Data lives on your device unless you opt-in to sync. You are responsible for the accuracy of the entries you log.' },
+  privacy: { title: 'Privacy Policy', body: 'ZenFinance does not collect personal data. Photos you scan are sent only to Google\'s Gemini API (per their terms) and are not stored by us. AI chat messages are sent to Gemini for the response and discarded.' },
+  ccpa: { title: 'CCPA Notice', body: 'California residents may request deletion of personal data. Since data is stored locally on your device, use Settings → Reset all data to delete everything.' },
+  gdpr: { title: 'GDPR Notice', body: 'EU users: this app stores data locally. There is no remote profile to delete. Reset all data wipes everything from this device.' },
+};
+
 export default function Settings() {
   const { t } = useTranslation();
-  const { preferences, setPreferences, isPrivacyMode, togglePrivacyMode, resetAllData } = useApp();
+  const { preferences, setPreferences, security, setSecurity, isPrivacyMode, togglePrivacyMode, resetAllData } = useApp();
+  const [openSection, setOpenSection] = useState<string | null>(null);
+  const [legalKey, setLegalKey] = useState<keyof typeof LEGAL | null>(null);
 
   const set = <K extends keyof typeof preferences>(key: K, val: typeof preferences[K]) =>
     setPreferences({ ...preferences, [key]: val });
@@ -153,6 +168,87 @@ export default function Settings() {
         </button>
       </Section>
 
+      {/* Sound — collapsible */}
+      <Collapsible
+        icon={Volume2}
+        title="Sound"
+        open={openSection === 'sound'}
+        onToggle={() => setOpenSection(openSection === 'sound' ? null : 'sound')}
+      >
+        <Toggle
+          label="All sounds"
+          icon={Volume2}
+          on={preferences.soundSettings.enabled}
+          onChange={v => set('soundSettings', { ...preferences.soundSettings, enabled: v })}
+        />
+        <Toggle
+          label="On income"
+          icon={Activity}
+          on={preferences.soundSettings.income}
+          onChange={v => set('soundSettings', { ...preferences.soundSettings, income: v })}
+        />
+        <Toggle
+          label="On expense"
+          icon={Activity}
+          on={preferences.soundSettings.expense}
+          onChange={v => set('soundSettings', { ...preferences.soundSettings, expense: v })}
+        />
+        <Toggle
+          label="System tones"
+          icon={Bell}
+          on={preferences.soundSettings.system}
+          onChange={v => set('soundSettings', { ...preferences.soundSettings, system: v })}
+        />
+      </Collapsible>
+
+      {/* Security — collapsible */}
+      <Collapsible
+        icon={Fingerprint}
+        title="Security"
+        open={openSection === 'security'}
+        onToggle={() => setOpenSection(openSection === 'security' ? null : 'security')}
+      >
+        <Toggle
+          label="Biometric (device-managed)"
+          icon={Fingerprint}
+          on={security.biometric}
+          onChange={v => setSecurity(s => ({ ...s, biometric: v }))}
+        />
+        <Toggle
+          label="Two-factor reminders"
+          icon={ShieldCheck}
+          on={security.twoFactor}
+          onChange={v => setSecurity(s => ({ ...s, twoFactor: v }))}
+        />
+        <Toggle
+          label="Anomaly alerts"
+          icon={Bell}
+          on={security.anomaly}
+          onChange={v => setSecurity(s => ({ ...s, anomaly: v }))}
+        />
+      </Collapsible>
+
+      {/* Legal — collapsible */}
+      <Collapsible
+        icon={FileText}
+        title="Legal & compliance"
+        open={openSection === 'legal'}
+        onToggle={() => setOpenSection(openSection === 'legal' ? null : 'legal')}
+      >
+        {(Object.keys(LEGAL) as Array<keyof typeof LEGAL>).map(key => (
+          <button
+            key={key}
+            onClick={() => setLegalKey(legalKey === key ? null : key)}
+            className="w-full text-left p-3 rounded-xl bg-zinc-100 dark:bg-white/5 hover:bg-zinc-200 dark:hover:bg-white/10 transition-colors"
+          >
+            <p className="text-sm font-bold text-zinc-900 dark:text-white">{LEGAL[key].title}</p>
+            {legalKey === key && (
+              <p className="text-xs text-zinc-500 mt-2 leading-relaxed">{LEGAL[key].body}</p>
+            )}
+          </button>
+        ))}
+      </Collapsible>
+
       {/* Danger zone */}
       <Section icon={Trash2} title="Danger zone" tone="danger">
         <button
@@ -187,6 +283,41 @@ function Section({
         {title}
       </div>
       {children}
+    </motion.section>
+  );
+}
+
+function Collapsible({
+  icon: Icon, title, open, onToggle, children,
+}: { icon: any; title: string; open: boolean; onToggle: () => void; children: React.ReactNode }) {
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-2xl overflow-hidden"
+    >
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center justify-between p-4 hover:bg-zinc-50 dark:hover:bg-white/[0.02] transition-colors"
+      >
+        <span className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+          <Icon size={12} />
+          {title}
+        </span>
+        <ChevronDown size={14} className={cn("text-zinc-400 transition-transform", open && "rotate-180")} />
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="p-4 pt-0 space-y-2">{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.section>
   );
 }

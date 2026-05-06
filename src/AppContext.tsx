@@ -115,9 +115,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // useLayoutEffect ensures the theme change is applied BEFORE the browser paints
   useLayoutEffect(() => {
     localStorage.setItem('zen_prefs_v2', JSON.stringify(preferences));
-    document.documentElement.classList.toggle('dark', preferences.theme === 'dark');
+    const dark = preferences.theme === 'dark';
+    const bg = dark ? '#050505' : '#fafafa';
+    document.documentElement.classList.toggle('dark', dark);
     document.documentElement.style.colorScheme = preferences.theme;
-  }, [preferences]);
+    document.documentElement.style.backgroundColor = bg;
+    document.body.style.backgroundColor = bg;
+    // Telegram WebApp owns the surrounding chrome — sync it too so users
+    // see the change immediately, not just inside our React tree.
+    const tg = (typeof window !== 'undefined' ? window.Telegram?.WebApp : null);
+    try {
+      tg?.setBackgroundColor?.(bg);
+      tg?.setHeaderColor?.(bg);
+    } catch { /* old Telegram clients */ }
+  }, [preferences.theme, preferences]);
 
   useEffect(() => {
     localStorage.setItem('zen_tx_v2', JSON.stringify(transactions));
