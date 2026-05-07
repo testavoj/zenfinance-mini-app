@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion } from 'motion/react';
 import { Languages, Coins, Sparkles, ArrowRight, Crown, Check } from 'lucide-react';
 import { useApp } from '../AppContext';
@@ -18,15 +19,22 @@ const LANGUAGES = [
 const CURRENCIES = [
   { code: 'USD', name: 'US Dollar', symbol: '$' },
   { code: 'EUR', name: 'Euro', symbol: '€' },
+  { code: 'BRL', name: 'Brazilian Real', symbol: 'R$' },
+  { code: 'GBP', name: 'British Pound', symbol: '£' },
   { code: 'RUB', name: 'Russian Ruble', symbol: '₽' },
   { code: 'AMD', name: 'Armenian Dram', symbol: '֏' },
-  { code: 'GBP', name: 'British Pound', symbol: '£' },
 ];
 
 export default function Onboarding() {
+  const { t, i18n } = useTranslation();
   const { preferences, setPreferences, tgUser } = useApp();
   const [language, setLanguage] = useState(preferences.language || 'en');
   const [currency, setCurrency] = useState(preferences.baseCurrency || 'USD');
+
+  // Switch the i18next language LIVE as the user picks a flag in onboarding,
+  // so the rest of the screen (labels, button) re-renders in that language
+  // before they tap "Get started".
+  React.useEffect(() => { i18n.changeLanguage(language); }, [language, i18n]);
 
   const finish = () => {
     setPreferences({
@@ -38,7 +46,7 @@ export default function Onboarding() {
     });
   };
 
-  const greeting = tgUser?.firstName ? `Hi ${tgUser.firstName}!` : 'Welcome!';
+  const greeting = tgUser?.firstName ? t('welcome', { name: tgUser.firstName }) : t('welcomeAnon', 'Welcome!');
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-[#050505] text-zinc-900 dark:text-white p-4 sm:p-6 flex items-center justify-center">
@@ -52,13 +60,13 @@ export default function Onboarding() {
             <Sparkles size={28} />
           </div>
           <h1 className="text-2xl font-bold tracking-tight">{greeting}</h1>
-          <p className="text-sm text-zinc-500">Let's set up ZenFinance in 10 seconds.</p>
+          <p className="text-sm text-zinc-500">{t('setupTagline')}</p>
         </div>
 
         {/* Language */}
         <section className="space-y-2">
           <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 flex items-center gap-1.5">
-            <Languages size={12} /> Language
+            <Languages size={12} /> {t('language')}
           </label>
           <div className="grid grid-cols-4 gap-2">
             {LANGUAGES.map(l => (
@@ -82,7 +90,7 @@ export default function Onboarding() {
         {/* Currency */}
         <section className="space-y-2">
           <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 flex items-center gap-1.5">
-            <Coins size={12} /> Base currency
+            <Coins size={12} /> {t('baseCurrency')}
           </label>
           <div className="grid grid-cols-1 gap-1.5">
             {CURRENCIES.map(c => (
@@ -109,12 +117,12 @@ export default function Onboarding() {
 
         {/* Tier */}
         <section className="space-y-2">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Plan</label>
+          <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">{t('plan')}</label>
           <div className="space-y-2">
             <div className="flex items-center justify-between p-4 rounded-xl border-2 border-indigo-600 bg-indigo-600/5">
               <div>
-                <p className="text-sm font-bold">Free</p>
-                <p className="text-xs text-zinc-500">10 photo scans · 10 AI chats · ads</p>
+                <p className="text-sm font-bold">{t('free')}</p>
+                <p className="text-xs text-zinc-500">{t('freeTierDesc')}</p>
               </div>
               <Check className="text-indigo-600" size={18} />
             </div>
@@ -122,11 +130,11 @@ export default function Onboarding() {
               <div className="flex items-center gap-2">
                 <Crown size={16} className="text-amber-500" />
                 <div>
-                  <p className="text-sm font-bold">Premium</p>
-                  <p className="text-xs text-zinc-500">Unlimited everything · no ads</p>
+                  <p className="text-sm font-bold">{t('premium')}</p>
+                  <p className="text-xs text-zinc-500">{t('premiumDesc')}</p>
                 </div>
               </div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Coming soon</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">{t('comingSoon')}</span>
             </div>
           </div>
         </section>
@@ -135,7 +143,7 @@ export default function Onboarding() {
           onClick={finish}
           className="w-full py-4 bg-indigo-600 rounded-2xl font-bold text-white flex items-center justify-center gap-2 hover:bg-indigo-500 shadow-xl transition-all"
         >
-          Get started <ArrowRight size={18} />
+          {t('getStarted')} <ArrowRight size={18} />
         </button>
       </motion.div>
     </div>

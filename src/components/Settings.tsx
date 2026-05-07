@@ -41,30 +41,24 @@ const LANGUAGES = [
 const CURRENCIES = [
   { code: 'USD', name: 'US Dollar', symbol: '$' },
   { code: 'EUR', name: 'Euro', symbol: '€' },
+  { code: 'BRL', name: 'Brazilian Real', symbol: 'R$' },
+  { code: 'GBP', name: 'British Pound', symbol: '£' },
   { code: 'RUB', name: 'Russian Ruble', symbol: '₽' },
   { code: 'AMD', name: 'Armenian Dram', symbol: '֏' },
-  { code: 'GBP', name: 'British Pound', symbol: '£' },
 ];
-
-const LEGAL = {
-  tos: { title: 'Terms of Service', body: 'By using ZenFinance you agree to use it as a personal finance tool. Data lives on your device unless you opt-in to sync. You are responsible for the accuracy of the entries you log.' },
-  privacy: { title: 'Privacy Policy', body: 'ZenFinance does not collect personal data. Photos you scan are sent only to Google\'s Gemini API (per their terms) and are not stored by us. AI chat messages are sent to Gemini for the response and discarded.' },
-  ccpa: { title: 'CCPA Notice', body: 'California residents may request deletion of personal data. Since data is stored locally on your device, use Settings → Reset all data to delete everything.' },
-  gdpr: { title: 'GDPR Notice', body: 'EU users: this app stores data locally. There is no remote profile to delete. Reset all data wipes everything from this device.' },
-};
 
 export default function Settings() {
   const { t } = useTranslation();
   const { preferences, setPreferences, security, setSecurity, isPrivacyMode, togglePrivacyMode, resetAllData, setCustomSound } = useApp();
   const [openSection, setOpenSection] = useState<string | null>(null);
-  const [legalKey, setLegalKey] = useState<keyof typeof LEGAL | null>(null);
+  const [legalKey, setLegalKey] = useState<'tos' | 'privacy' | 'ccpa' | 'gdpr' | null>(null);
 
   const set = <K extends keyof typeof preferences>(key: K, val: typeof preferences[K]) =>
     setPreferences({ ...preferences, [key]: val });
 
   const onReset = () => {
     const tg = getTelegram();
-    const msg = 'Reset everything? All your transactions, settings, and quotas on this device will be erased.';
+    const msg = t('resetConfirm');
     if (tg?.showConfirm) {
       tg.showConfirm(msg, ok => { if (ok) resetAllData(); });
     } else if (window.confirm(msg)) {
@@ -74,7 +68,7 @@ export default function Settings() {
 
   const onUpgrade = () => {
     const tg = getTelegram();
-    const msg = 'Premium plans are coming soon. For now, you can watch ads to refill your AI and photo quotas.';
+    const msg = t('premiumComingSoon');
     if (tg?.showAlert) tg.showAlert(msg);
     else alert(msg);
   };
@@ -83,11 +77,11 @@ export default function Settings() {
     <div className="max-w-md mx-auto pb-12 space-y-5">
       <header className="space-y-1 px-1">
         <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">{t('settings')}</h2>
-        <p className="text-sm text-zinc-500">Tweak your preferences below.</p>
+        <p className="text-sm text-zinc-500">{t('tweakPrefs')}</p>
       </header>
 
       {/* Language */}
-      <Section icon={Languages} title="Language">
+      <Section icon={Languages} title={t('language')}>
         <div className="grid grid-cols-4 gap-2">
           {LANGUAGES.map(l => (
             <button
@@ -108,7 +102,7 @@ export default function Settings() {
       </Section>
 
       {/* Currency */}
-      <Section icon={Coins} title="Currency">
+      <Section icon={Coins} title={t('currency')}>
         <div className="space-y-1.5">
           {CURRENCIES.map(c => (
             <button
@@ -133,15 +127,15 @@ export default function Settings() {
       </Section>
 
       {/* Toggles */}
-      <Section icon={ShieldCheck} title="Display & Privacy">
+      <Section icon={ShieldCheck} title={t('displayPrivacy')}>
         <Toggle
-          label="Dark mode"
+          label={t('darkMode')}
           icon={preferences.theme === 'dark' ? Moon : Sun}
           on={preferences.theme === 'dark'}
           onChange={v => set('theme', v ? 'dark' : 'light')}
         />
         <Toggle
-          label="Privacy mode (hide amounts)"
+          label={t('privacyModeLabel')}
           icon={isPrivacyMode ? EyeOff : Eye}
           on={isPrivacyMode}
           onChange={() => togglePrivacyMode()}
@@ -149,11 +143,11 @@ export default function Settings() {
       </Section>
 
       {/* Plan */}
-      <Section icon={Crown} title="Plan">
+      <Section icon={Crown} title={t('plan')}>
         <div className="flex items-center justify-between p-3 rounded-xl border-2 border-indigo-600 bg-indigo-600/5 mb-2">
           <div>
-            <p className="text-sm font-bold text-zinc-900 dark:text-white">Free tier</p>
-            <p className="text-xs text-zinc-500">10 photos · 10 AI chats · ads · refill via watching ads</p>
+            <p className="text-sm font-bold text-zinc-900 dark:text-white">{t('freeTier')}</p>
+            <p className="text-xs text-zinc-500">{t('freeTierDesc')}</p>
           </div>
           <Check className="text-indigo-600" size={18} />
         </div>
@@ -164,23 +158,23 @@ export default function Settings() {
           <div className="flex items-center gap-2 text-left">
             <Crown size={16} className="text-amber-500" />
             <div>
-              <p className="text-sm font-bold text-zinc-900 dark:text-white">Premium</p>
-              <p className="text-xs text-zinc-500">Unlimited · no ads</p>
+              <p className="text-sm font-bold text-zinc-900 dark:text-white">{t('premium')}</p>
+              <p className="text-xs text-zinc-500">{t('premiumDesc')}</p>
             </div>
           </div>
-          <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Coming soon</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">{t('comingSoon')}</span>
         </button>
       </Section>
 
       {/* Sound — collapsible, with per-event custom audio upload */}
       <Collapsible
         icon={Volume2}
-        title="Sound"
+        title={t('sound')}
         open={openSection === 'sound'}
         onToggle={() => setOpenSection(openSection === 'sound' ? null : 'sound')}
       >
         <Toggle
-          label="All sounds"
+          label={t('allSounds')}
           icon={Volume2}
           on={preferences.soundSettings.enabled}
           onChange={v => set('soundSettings', { ...preferences.soundSettings, enabled: v })}
@@ -189,6 +183,9 @@ export default function Settings() {
           <React.Fragment key={kind}>
             <SoundRow
               kind={kind}
+              label={t({ income: 'onIncome', expense: 'onExpense', payment: 'onPayment', system: 'systemTones' }[kind])}
+              uploadLabel={t('uploadAudio')}
+              replaceLabel={t('replaceAudio')}
               enabled={preferences.soundSettings[kind]}
               customUrl={preferences.customSounds?.[kind] || ''}
               onToggle={v => set('soundSettings', { ...preferences.soundSettings, [kind]: v })}
@@ -203,24 +200,24 @@ export default function Settings() {
       {!isTelegramWebApp() && (
         <Collapsible
           icon={Fingerprint}
-          title="Security"
+          title={t('security')}
           open={openSection === 'security'}
           onToggle={() => setOpenSection(openSection === 'security' ? null : 'security')}
         >
           <Toggle
-            label="Biometric (device-managed)"
+            label={t('biometric')}
             icon={Fingerprint}
             on={security.biometric}
             onChange={v => setSecurity(s => ({ ...s, biometric: v }))}
           />
           <Toggle
-            label="Two-factor reminders"
+            label={t('twoFactor')}
             icon={ShieldCheck}
             on={security.twoFactor}
             onChange={v => setSecurity(s => ({ ...s, twoFactor: v }))}
           />
           <Toggle
-            label="Anomaly alerts"
+            label={t('anomalyAlerts')}
             icon={Bell}
             on={security.anomaly}
             onChange={v => setSecurity(s => ({ ...s, anomaly: v }))}
@@ -231,33 +228,37 @@ export default function Settings() {
       {/* Legal — collapsible */}
       <Collapsible
         icon={FileText}
-        title="Legal & compliance"
+        title={t('legal')}
         open={openSection === 'legal'}
         onToggle={() => setOpenSection(openSection === 'legal' ? null : 'legal')}
       >
-        {(Object.keys(LEGAL) as Array<keyof typeof LEGAL>).map(key => (
+        {(['tos', 'privacy', 'ccpa', 'gdpr'] as const).map(key => (
           <button
             key={key}
             onClick={() => setLegalKey(legalKey === key ? null : key)}
             className="w-full text-left p-3 rounded-xl bg-zinc-100 dark:bg-white/5 hover:bg-zinc-200 dark:hover:bg-white/10 transition-colors"
           >
-            <p className="text-sm font-bold text-zinc-900 dark:text-white">{LEGAL[key].title}</p>
+            <p className="text-sm font-bold text-zinc-900 dark:text-white">
+              {t({ tos: 'legalTos', privacy: 'legalPrivacy', ccpa: 'legalCcpa', gdpr: 'legalGdpr' }[key])}
+            </p>
             {legalKey === key && (
-              <p className="text-xs text-zinc-500 mt-2 leading-relaxed">{LEGAL[key].body}</p>
+              <p className="text-xs text-zinc-500 mt-2 leading-relaxed">
+                {t({ tos: 'legalTosBody', privacy: 'legalPrivacyBody', ccpa: 'legalCcpaBody', gdpr: 'legalGdprBody' }[key])}
+              </p>
             )}
           </button>
         ))}
       </Collapsible>
 
       {/* Danger zone */}
-      <Section icon={Trash2} title="Danger zone" tone="danger">
+      <Section icon={Trash2} title={t('dangerZone')} tone="danger">
         <button
           onClick={onReset}
           className="w-full flex items-center justify-between p-3 rounded-xl border border-rose-500/30 bg-rose-500/5 hover:bg-rose-500/10 text-rose-600 dark:text-rose-400 transition-colors"
         >
           <div className="text-left">
-            <p className="text-sm font-bold">Reset all data</p>
-            <p className="text-xs opacity-80">Erase transactions, settings, and quotas on this device.</p>
+            <p className="text-sm font-bold">{t('resetAll')}</p>
+            <p className="text-xs opacity-80">{t('resetAllDesc')}</p>
           </div>
           <Trash2 size={16} />
         </button>
@@ -323,9 +324,12 @@ function Collapsible({
 }
 
 function SoundRow({
-  kind, enabled, customUrl, onToggle, onPick, onClear,
+  kind, label, uploadLabel, replaceLabel, enabled, customUrl, onToggle, onPick, onClear,
 }: {
   kind: 'income' | 'expense' | 'payment' | 'system';
+  label: string;
+  uploadLabel: string;
+  replaceLabel: string;
   enabled: boolean;
   customUrl: string;
   onToggle: (v: boolean) => void;
@@ -355,17 +359,10 @@ function SoundRow({
     } catch { /* noop */ }
   };
 
-  const labels: Record<string, string> = {
-    income: 'On income',
-    expense: 'On expense',
-    payment: 'On payment',
-    system: 'System tones',
-  };
-
   return (
     <div className="rounded-xl bg-zinc-100 dark:bg-white/5 p-2.5 space-y-2">
       <Toggle
-        label={labels[kind]}
+        label={label}
         icon={kind === 'system' ? Bell : Activity}
         on={enabled}
         onChange={onToggle}
@@ -377,7 +374,7 @@ function SoundRow({
             className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-white dark:bg-white/10 border border-zinc-200 dark:border-white/10 text-xs font-bold text-zinc-700 dark:text-zinc-200 hover:border-indigo-500/40 transition-colors"
           >
             <Upload size={12} />
-            {customUrl ? 'Replace audio' : 'Upload audio'}
+            {customUrl ? replaceLabel : uploadLabel}
           </button>
           {customUrl && (
             <>

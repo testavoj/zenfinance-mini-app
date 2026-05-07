@@ -18,7 +18,7 @@ export default function AIAssistant() {
   const { playSound } = useSound();
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: `Hi ${tgUser?.firstName || 'there'}! I'm your ZenFinance AI. Ask me anything about budgeting, savings, or investments.` }
+    { role: 'assistant', content: t('aiGreeting', { name: tgUser?.firstName || '' }) }
   ]);
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -83,17 +83,17 @@ export default function AIAssistant() {
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2 text-zinc-900 dark:text-white">
             <Sparkles className="text-indigo-600 dark:text-indigo-400" size={24} />
-            Zen Intelligence
+            {t('zenIntelligence')}
           </h2>
           <p className={cn(
             "text-sm font-medium",
             remaining === 0 ? "text-rose-500" : "text-zinc-500"
           )}>
-            {remaining} Free requests remaining today.
+            {t('freeReqsRemaining', { n: remaining })}
           </p>
         </div>
         <div className="bg-indigo-600/10 border border-indigo-600/20 px-4 py-1.5 rounded-full">
-          <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Premium Available</span>
+          <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">{t('premiumAvailable')}</span>
         </div>
       </div>
 
@@ -134,7 +134,7 @@ export default function AIAssistant() {
             </div>
             <div className="p-4 rounded-2xl bg-zinc-100 dark:bg-white/[0.03] border border-zinc-200 dark:border-white/5 text-zinc-500 flex items-center gap-2">
               <Loader2 className="animate-spin" size={16} />
-              Analyzing patterns...
+              {t('analyzingPatterns')}
             </div>
           </div>
         )}
@@ -148,7 +148,7 @@ export default function AIAssistant() {
             className="flex items-center gap-3 p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-600 dark:text-rose-400 text-xs font-bold"
           >
             <AlertCircle size={16} />
-            Quota Depleted. Upgrade to ZenPremium for continued financial intelligence.
+            {t('quotaDepletedTitle')}
           </motion.div>
         )}
         <div className="relative shrink-0">
@@ -158,7 +158,7 @@ export default function AIAssistant() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             disabled={remaining === 0}
-            placeholder={remaining === 0 ? "Quota depleted..." : "Ask about savings, investments, or deviations..."}
+            placeholder={remaining === 0 ? t('quotaDepleted') : t('aiPlaceholder')}
             className="w-full bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-2xl py-4 pl-6 pr-14 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 transition-all placeholder:text-zinc-400 dark:text-white disabled:opacity-50"
           />
           <button 

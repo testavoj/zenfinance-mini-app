@@ -8,7 +8,8 @@ export function cn(...inputs: ClassValue[]) {
 export function getCurrencySymbol(currency: string = 'USD', locale: string = 'en-US'): string {
   if (currency === 'AMD') return '֏';
   if (currency === 'RUB') return '₽';
-  
+  if (currency === 'BRL') return 'R$';
+
   try {
     const parts = new Intl.NumberFormat(locale, {
       style: 'currency',

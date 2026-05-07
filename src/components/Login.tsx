@@ -1,8 +1,10 @@
 import React from 'react';
 import { Shield, ExternalLink } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 
 export default function Login() {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-[#050505] text-zinc-900 dark:text-white flex items-center justify-center p-6 relative overflow-hidden transition-colors duration-500">
       <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-indigo-600/10 dark:bg-indigo-600/20 rounded-full blur-[120px] -z-10 animate-pulse" />
@@ -21,13 +23,13 @@ export default function Login() {
 
         <div className="space-y-2">
           <h2 className="text-3xl font-bold tracking-tight">ZenFinance</h2>
-          <p className="text-zinc-500">AI-powered finance, exclusively as a Telegram Mini App.</p>
+          <p className="text-zinc-500">{t('loginSubtitle')}</p>
         </div>
 
         <div className="text-left p-4 bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-2xl space-y-2">
-          <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">Open inside Telegram</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">{t('openInTelegram')}</p>
           <p className="text-sm">
-            This app authenticates with your Telegram identity. Browser access is disabled.
+            {t('openInTelegramDesc')}
           </p>
         </div>
 
@@ -35,12 +37,12 @@ export default function Login() {
           href="https://t.me"
           className="w-full py-4 bg-indigo-600 rounded-2xl font-bold text-white flex items-center justify-center gap-2 hover:bg-indigo-500 shadow-xl transition-all"
         >
-          Open Telegram
+          {t('openTelegram')}
           <ExternalLink size={16} />
         </a>
 
         <p className="text-[10px] uppercase tracking-widest text-zinc-400">
-          Find this bot via the menu button or short link your admin shared.
+          {t('loginFooter')}
         </p>
       </motion.div>
     </div>

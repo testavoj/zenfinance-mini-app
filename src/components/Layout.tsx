@@ -128,7 +128,7 @@ export default function Layout({ children, activeTab, setActiveTab }: LayoutProp
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
               <input 
                 type="text" 
-                placeholder="Search transactions..."
+                placeholder={t('searchTransactions')}
                 className="w-full bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-full py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white transition-all"
               />
             </div>
@@ -150,7 +150,7 @@ export default function Layout({ children, activeTab, setActiveTab }: LayoutProp
             >
               <div className="text-right">
                 <p className="text-sm font-medium group-hover:text-indigo-600 dark:group-hover:text-indigo-400">{displayName}</p>
-                <p className="text-xs text-indigo-600 dark:text-indigo-400 font-mono">Free tier</p>
+                <p className="text-xs text-indigo-600 dark:text-indigo-400 font-mono">{t('freeTier')}</p>
               </div>
               <div className="w-10 h-10 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-full p-[2px]">
                 <div className="w-full h-full rounded-full bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center p-1">
@@ -169,7 +169,7 @@ export default function Layout({ children, activeTab, setActiveTab }: LayoutProp
         <Modal 
           isOpen={showNotifications} 
           onClose={() => setShowNotifications(false)} 
-          title="Notifications"
+          title={t('notifications')}
         >
           <div className="space-y-4">
             {notifications.length > 0 ? (
@@ -180,7 +180,7 @@ export default function Layout({ children, activeTab, setActiveTab }: LayoutProp
                     className="text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-rose-500 transition-colors flex items-center gap-2"
                   >
                     <Trash2 size={12} />
-                    Clear All
+                    {t('clearAll')}
                   </button>
                 </div>
                 {notifications.map((notification) => (
@@ -213,8 +213,8 @@ export default function Layout({ children, activeTab, setActiveTab }: LayoutProp
                 <div className="w-16 h-16 bg-zinc-100 dark:bg-white/5 rounded-full flex items-center justify-center text-zinc-400 mb-4">
                   <Bell size={32} />
                 </div>
-                <p className="text-sm font-bold text-zinc-900 dark:text-white">All caught up!</p>
-                <p className="text-xs text-zinc-500 mt-1">No new notifications to show.</p>
+                <p className="text-sm font-bold text-zinc-900 dark:text-white">{t('allCaughtUp')}</p>
+                <p className="text-xs text-zinc-500 mt-1">{t('noNotifications')}</p>
               </div>
             )}
           </div>
@@ -224,7 +224,7 @@ export default function Layout({ children, activeTab, setActiveTab }: LayoutProp
         <Modal 
           isOpen={showProfile} 
           onClose={() => setShowProfile(false)} 
-          title="Profile & Identity"
+          title={t('profileTitle')}
         >
           <div className="space-y-8">
             <div className="flex flex-col items-center text-center">
@@ -240,7 +240,7 @@ export default function Layout({ children, activeTab, setActiveTab }: LayoutProp
                 <p className="text-zinc-500 text-sm">@{tgUser.username}</p>
               )}
               <div className="mt-4 flex items-center gap-2 px-3 py-1 bg-zinc-200 dark:bg-white/5 border border-zinc-300 dark:border-white/10 rounded-full text-zinc-500 text-xs font-bold uppercase">
-                Free tier
+                {t('freeTier')}
               </div>
             </div>
 
@@ -248,9 +248,9 @@ export default function Layout({ children, activeTab, setActiveTab }: LayoutProp
               <div className="flex items-center justify-between p-4 bg-zinc-100 dark:bg-white/5 rounded-2xl">
                 <div className="flex items-center gap-3">
                   <User size={18} className="text-zinc-500" />
-                  <span className="text-sm">Telegram identity</span>
+                  <span className="text-sm">{t('telegramIdentity')}</span>
                 </div>
-                <span className="text-xs text-emerald-500">Verified</span>
+                <span className="text-xs text-emerald-500">{t('verified')}</span>
               </div>
               <button
                 onClick={onPremiumClick}
@@ -258,9 +258,9 @@ export default function Layout({ children, activeTab, setActiveTab }: LayoutProp
               >
                 <div className="flex items-center gap-3">
                   <Crown size={18} className="text-zinc-500" />
-                  <span className="text-sm">Premium</span>
+                  <span className="text-sm">{t('premium')}</span>
                 </div>
-                <span className="text-xs text-indigo-500">Coming soon</span>
+                <span className="text-xs text-indigo-500">{t('comingSoon')}</span>
               </button>
             </div>
 
@@ -268,7 +268,7 @@ export default function Layout({ children, activeTab, setActiveTab }: LayoutProp
               onClick={onLogout}
               className="w-full py-4 bg-rose-500/10 text-rose-500 border border-rose-500/20 rounded-2xl font-bold text-sm hover:bg-rose-500 hover:text-white transition-all"
             >
-              Close mini app
+              {t('closeMiniApp')}
             </button>
           </div>
         </Modal>
@@ -308,28 +308,28 @@ export default function Layout({ children, activeTab, setActiveTab }: LayoutProp
               <div className="min-w-0">
                 {adState === 'success' ? (
                   <>
-                    <p className="text-sm font-black text-emerald-500 truncate">Reward unlocked</p>
-                    <p className="text-xs text-zinc-500 font-medium truncate">+1 AI message and +1 photo scan added.</p>
+                    <p className="text-sm font-black text-emerald-500 truncate">{t('rewardUnlocked')}</p>
+                    <p className="text-xs text-zinc-500 font-medium truncate">{t('rewardUnlockedDesc')}</p>
                   </>
                 ) : adState === 'error' ? (
                   <>
-                    <p className="text-sm font-black text-rose-500 truncate">No ad available</p>
-                    <p className="text-xs text-zinc-500 font-medium truncate">Try again in a few minutes.</p>
+                    <p className="text-sm font-black text-rose-500 truncate">{t('noAdAvailable')}</p>
+                    <p className="text-xs text-zinc-500 font-medium truncate">{t('noAdAvailableDesc')}</p>
                   </>
                 ) : (
                   <>
                     <p className="text-sm font-black text-zinc-900 dark:text-white truncate">
-                      {adsEnabled() ? 'Watch a short ad → +1 AI msg, +1 photo scan' : 'Sponsored slot'}
+                      {adsEnabled() ? t('watchAdCta') : t('sponsoredSlot')}
                     </p>
                     <p className="text-xs text-zinc-500 font-medium truncate">
-                      {adsEnabled() ? 'Adsgram rewarded video, ~15 seconds.' : 'Configure VITE_ADSGRAM_BLOCK_ID to enable real ads.'}
+                      {adsEnabled() ? t('watchAdSubtitle') : t('configureBlockId')}
                     </p>
                   </>
                 )}
               </div>
             </div>
             <span className="bg-indigo-600 text-white px-5 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-500/20 whitespace-nowrap shrink-0 ml-3">
-              {adState === 'loading' ? '...' : adState === 'success' ? '✓' : 'Watch'}
+              {adState === 'loading' ? '...' : adState === 'success' ? '✓' : t('watch')}
             </span>
           </button>
         </div>

@@ -72,7 +72,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (tab: string) =
             trend={savingsRate >= 20 ? 'up' : 'down'}
           />
           <StatCard
-            title="Health Index"
+            title={t('healthIndex')}
             value={hasData ? `${healthIndex}/100` : '—'}
             change={hasData ? (healthIndex >= 70 ? 'Strong' : healthIndex >= 40 ? 'OK' : 'Build it up') : 'Log to start'}
             icon={Trophy}
@@ -88,7 +88,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (tab: string) =
           <div className="lg:col-span-2 bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-3xl p-8 backdrop-blur-sm shadow-sm dark:shadow-none">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8">
               <div>
-                <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white">Analytics Overview</h2>
+                <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white">{t('analyticsOverview')}</h2>
                 <p className="text-xs text-zinc-500 mt-1">Detailed flow for {timeRange.toLowerCase()}ly period</p>
               </div>
               
@@ -120,7 +120,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (tab: string) =
             )}>
                {preferences.dashboardStats.showIncome && (
                  <div className="p-4 bg-zinc-100 dark:bg-white/[0.03] border border-zinc-200 dark:border-white/5 rounded-2xl flex flex-col justify-between min-h-[90px] min-w-0">
-                    <p className="text-[10px] font-bold text-zinc-500 dark:text-zinc-500 uppercase tracking-widest leading-none truncate mb-1">Total Income</p>
+                    <p className="text-[10px] font-bold text-zinc-500 dark:text-zinc-500 uppercase tracking-widest leading-none truncate mb-1">{t('totalIncome')}</p>
                     <p className="text-lg sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400 tracking-tighter truncate tabular-nums" title={isPrivacyMode ? 'Hidden' : formatCurrency(chartData.reduce((acc, curr) => acc + curr.income, 0), preferences.baseCurrency)}>
                       {isPrivacyMode ? '••••••' : formatCurrency(chartData.reduce((acc, curr) => acc + curr.income, 0), preferences.baseCurrency)}
                     </p>
@@ -128,7 +128,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (tab: string) =
                )}
                {preferences.dashboardStats.showOutgoing && (
                  <div className="p-4 bg-zinc-100 dark:bg-white/[0.03] border border-zinc-200 dark:border-white/5 rounded-2xl flex flex-col justify-between min-h-[90px] min-w-0">
-                    <p className="text-[10px] font-bold text-zinc-500 dark:text-zinc-500 uppercase tracking-widest leading-none truncate mb-1">Outgoing</p>
+                    <p className="text-[10px] font-bold text-zinc-500 dark:text-zinc-500 uppercase tracking-widest leading-none truncate mb-1">{t('outgoing')}</p>
                     <p className="text-lg sm:text-2xl font-bold text-rose-600 dark:text-rose-400 tracking-tighter truncate tabular-nums" title={isPrivacyMode ? 'Hidden' : formatCurrency(chartData.reduce((acc, curr) => acc + curr.expense, 0), preferences.baseCurrency)}>
                       {isPrivacyMode ? '••••••' : formatCurrency(chartData.reduce((acc, curr) => acc + curr.expense, 0), preferences.baseCurrency)}
                     </p>
@@ -136,7 +136,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (tab: string) =
                )}
                {preferences.dashboardStats.showNetFlow && (
                  <div className="p-4 bg-zinc-100 dark:bg-white/[0.03] border border-zinc-200 dark:border-white/5 rounded-2xl flex flex-col justify-between min-h-[90px] min-w-0">
-                    <p className="text-[10px] font-bold text-zinc-500 dark:text-zinc-500 uppercase tracking-widest leading-none truncate mb-1">Net Flow</p>
+                    <p className="text-[10px] font-bold text-zinc-500 dark:text-zinc-500 uppercase tracking-widest leading-none truncate mb-1">{t('netFlow')}</p>
                     <p className={cn(
                       "text-lg sm:text-2xl font-bold tracking-tighter truncate tabular-nums",
                       chartData.reduce((acc, curr) => acc + curr.income - curr.expense, 0) >= 0 ? "text-indigo-600 dark:text-indigo-400" : "text-zinc-600 dark:text-zinc-100"
@@ -194,13 +194,13 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (tab: string) =
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-xl font-bold tracking-tight flex items-center gap-2 text-zinc-900 dark:text-white">
                 <History size={20} className="text-indigo-600 dark:text-indigo-400" />
-                History
+                {t('history')}
               </h2>
-              <button 
+              <button
                 onClick={() => setShowAllHistory(true)}
                 className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 font-medium px-3 py-1 bg-indigo-600/10 rounded-full"
               >
-                View All
+                {t('viewAll')}
               </button>
             </div>
             <div className="space-y-6">
@@ -294,7 +294,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (tab: string) =
       <Modal
         isOpen={showAllHistory}
         onClose={() => setShowAllHistory(false)}
-        title="Full History"
+        title={t('fullHistory')}
       >
         <div className="space-y-6">
            <div className="relative">

@@ -231,42 +231,43 @@ export default function QuickLog() {
             <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
               <Check size={14} className="stroke-[4]" />
             </div>
-            <span className="uppercase tracking-widest text-[10px]">Transaction Secured</span>
+            <span className="uppercase tracking-widest text-[10px]">{t('txSecured', 'Transaction secured')}</span>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Main Entry Surface */}
-      <div className="flex-1 flex flex-col gap-6">
-        {/* Header Logic */}
-        <div className="flex items-center justify-between px-4">
-          <div className="flex bg-zinc-100 dark:bg-white/5 p-1 rounded-2xl w-48">
-            <button 
+      <div className="flex-1 flex flex-col gap-4 sm:gap-6">
+        {/* Header — type toggle on top, action icons + scan-quota pill below.
+            Two rows so nothing overlaps on a narrow Telegram viewport. */}
+        <div className="px-2 space-y-2">
+          <div className="flex bg-zinc-100 dark:bg-white/5 p-1 rounded-2xl w-full max-w-[260px] mx-auto">
+            <button
               onClick={() => { setType('expense'); playSound('notify', 'system'); }}
               className={cn(
-                "flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                "flex-1 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all",
                 type === 'expense' ? "bg-rose-500 text-white shadow-lg" : "text-zinc-500"
               )}
             >
-              Expense
+              {t('expense', 'Expense')}
             </button>
-            <button 
+            <button
               onClick={() => { setType('income'); playSound('notify', 'system'); }}
               className={cn(
-                "flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                "flex-1 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all",
                 type === 'income' ? "bg-emerald-500 text-white shadow-lg" : "text-zinc-500"
               )}
             >
-              Income
+              {t('income', 'Income')}
             </button>
           </div>
-          
-          <div className="flex items-center gap-2">
+
+          <div className="flex items-center justify-center gap-3 flex-wrap">
             {HAS_AI && (
               <span
                 key={photosRemaining}
                 className={cn(
-                  "text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full transition-colors tabular-nums",
+                  "text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full transition-colors tabular-nums whitespace-nowrap",
                   photosRemaining > 3
                     ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                     : photosRemaining > 0
@@ -274,21 +275,16 @@ export default function QuickLog() {
                     : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
                 )}
               >
-                {photosRemaining}/{PHOTO_QUOTA_LIMIT} scans
+                {photosRemaining}/{PHOTO_QUOTA_LIMIT} {t('scans', 'scans')}
               </span>
             )}
-            <button onClick={toggleVoice} className="p-3 bg-zinc-100 dark:bg-white/5 rounded-2xl text-zinc-500 hover:text-indigo-600 transition-colors">
-              <Mic size={18} />
+            <button onClick={toggleVoice} className="p-2.5 bg-zinc-100 dark:bg-white/5 rounded-2xl text-zinc-500 hover:text-indigo-600 transition-colors">
+              <Mic size={16} />
             </button>
             {HAS_AI && (
               <>
-                <button onClick={onCameraClick} className="p-3 bg-zinc-100 dark:bg-white/5 rounded-2xl text-zinc-500 hover:text-indigo-600 transition-colors relative">
-                  <Camera size={18} />
-                  {photosRemaining > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-indigo-600 text-white text-[10px] font-black flex items-center justify-center">
-                      {photosRemaining}
-                    </span>
-                  )}
+                <button onClick={onCameraClick} className="p-2.5 bg-zinc-100 dark:bg-white/5 rounded-2xl text-zinc-500 hover:text-indigo-600 transition-colors">
+                  <Camera size={16} />
                 </button>
                 <input
                   ref={fileInputRef}
@@ -319,7 +315,7 @@ export default function QuickLog() {
                 {amount || '0'}
               </motion.span>
            </div>
-           <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-zinc-400 mt-1">Tap numpad to enter amount</p>
+           <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-zinc-400 mt-1">{t('numpadHint', 'Tap numpad to enter amount')}</p>
         </div>
 
         {/* Note Input */}
@@ -327,7 +323,7 @@ export default function QuickLog() {
           <div className="relative">
             <input 
               type="text"
-              placeholder="What's this for? (Optional note)"
+              placeholder={t('noteHint', "What's this for? (Optional note)")}
               value={note}
               onChange={(e) => setNote(e.target.value)}
               className="w-full bg-zinc-100 dark:bg-white/5 border border-transparent focus:border-indigo-500/30 dark:focus:border-white/20 rounded-[2rem] px-6 py-4 text-sm font-medium focus:outline-none transition-all pr-12"
@@ -338,7 +334,8 @@ export default function QuickLog() {
           </div>
         </div>
 
-        {/* Category Carousel — compact */}
+        {/* Category Carousel — cards expand to fit their label so longer
+            labels (Entertainment, Shopping…) never overlap or clip. */}
         <div className="px-2 overflow-hidden">
           <div className="flex gap-2 overflow-x-auto pb-3 scrollbar-hide">
             {categories.map((cat) => (
@@ -346,7 +343,7 @@ export default function QuickLog() {
                 key={cat.label}
                 onClick={() => { setCategory(cat.label); playSound('notify', 'system'); }}
                 className={cn(
-                  "min-w-[68px] flex flex-col items-center justify-center gap-1.5 p-2 rounded-2xl border transition-all shrink-0 font-bold",
+                  "flex flex-col items-center justify-center gap-1.5 px-3 py-2 rounded-2xl border transition-all shrink-0 font-bold",
                   category === cat.label
                     ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-500/20"
                     : "bg-white dark:bg-white/5 border-zinc-100 dark:border-white/5 text-zinc-500 hover:border-indigo-600/30"
@@ -358,7 +355,7 @@ export default function QuickLog() {
                 )}>
                   <cat.icon size={16} className={category === cat.label ? "text-white" : "text-zinc-500 dark:text-zinc-400"} />
                 </div>
-                <span className="text-[9px] font-black uppercase tracking-wider">{cat.label}</span>
+                <span className="text-[10px] font-black uppercase tracking-wider whitespace-nowrap">{t(`cat.${cat.label}`, cat.label)}</span>
               </button>
             ))}
           </div>
@@ -398,7 +395,7 @@ export default function QuickLog() {
                <Plus size={14} className="stroke-[3]" />
             </div>
           )}
-          {isSaving ? 'Synchronizing...' : `Record ${type}`}
+          {isSaving ? t('syncing', 'Synchronizing...') : (type === 'income' ? t('recordIncome', 'Record income') : t('recordExpense', 'Record expense'))}
         </button>
       </div>
 
@@ -436,7 +433,7 @@ export default function QuickLog() {
       <Modal
         isOpen={showScanner}
         onClose={() => { if (!isScanning) setShowScanner(false); }}
-        title="Receipt Photo Scan"
+        title={t('receiptScan', 'Receipt photo scan')}
       >
         <div className="space-y-6">
           <div className="aspect-square bg-zinc-900 rounded-[3rem] border-2 border-indigo-500/30 relative overflow-hidden">
